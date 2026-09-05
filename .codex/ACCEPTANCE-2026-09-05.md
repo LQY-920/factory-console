@@ -56,6 +56,10 @@ audit 技能用于诊断；其引用的 frontend-design 技能当前不可用，
 
 ## 启动及下一步
 
+最终收尾：代码提交 `6948dd0` 已推至私有仓库，CI https://github.com/LQY-920/factory-console/actions/runs/33956687856 的 npm ci/lint/typecheck/test/build 全部成功。正式服务的 health 和首页 HTTP 200，真实 salon-wall 总览刷新后 Git/GitHub/Factory 均 Connected；一次 Factory 状态超时后只读重试恢复，不掩盖网络不稳定。浏览器错误/警告为 0。桌面总览 Lighthouse 快照 Accessibility 100、Best Practices 100（抽样工具结果，非完整无障碍认证）；手机抽样亦为 100/100。英文预览无生成文案中文残留，切换前后 selectedProjectId 相同；HTML lang 随语言和刷新持久化一致。
+
+清理：只删除自行创建的 `UI acceptance edited` 临时配置（可按上面的步骤重新创建，无用户数据），保留独立验收仓库和 SQLite 证据，停止测试端口 8788。正式端口 8787 保持运行。
+
 项目根目录执行 `npm ci`（首次）、`npm run build`、`npm start`；访问 http://127.0.0.1:8787 。开发模式 `npm run dev`，访问 http://127.0.0.1:5173 。
 
 建议下一步用 1–2 个真实 Issue 跑小批次，人工复核批准、候选测试和最终合入；准备真实 Webhook 后单独验证手机通知。不要跳过确认直接扩大自动化权限。
