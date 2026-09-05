@@ -24,6 +24,10 @@ export const ACTION_ALLOWLIST: Readonly<Record<ActionId, { mutating: boolean }>>
   batchStart: { mutating: true },
 })
 
+export function isAllowedAction(action: string): action is ActionId {
+  return Object.hasOwn(ACTION_ALLOWLIST, action)
+}
+
 export function resolveExecutable(executable: CommandSpec['executable']): string {
   if (executable !== 'bash' || process.platform !== 'win32') return executable
   const configured = process.env.FACTORY_CONSOLE_BASH_PATH
@@ -38,25 +42,26 @@ export function resolveExecutable(executable: CommandSpec['executable']): string
 }
 
 function assertProjectRelative(path: string): void {
-  if (/^[\\/]/.test(path) || /^[A-Za-z]:/.test(path) || path.split(/[\\/]/).includes('..') || /[\r\n\0]/.test(path)) {
+  if (/^[-\\/]/.test(path) || /^[A-Za-z]:/.test(path) || path.split(/[\\/]/).includes('..') || /[\r\n\0]/.test(path)) {
     throw new Error('unsafe_relative_path')
   }
 }
 
 export function buildActionCommand(project: ProjectConfig, action: ActionId): CommandSpec {
-  if (!(action in ACTION_ALLOWLIST)) throw new Error('action_not_allowed')
+  if (!isAllowedAction(action)) throw new Error('action_not_allowed')
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(project.batchName)) throw new Error('unsafe_batch')
   assertProjectRelative(project.factoryScriptPath)
   assertProjectRelative(project.prdPath)
   const script = project.factoryScriptPath.replaceAll('\\', '/')
   const base = { executable: 'bash' as const, cwd: project.localRepoPath }
   if (action === 'doctor') return { ...base, args: [script, 'doctor'], display: `factory doctor` }
   if (action === 'reviewCollect') {
-    return { ...base, args: [script, 'review', 'collect', project.batchName], display: `factory review collect ${project.batchName}` }
+    return { ...base, args: [script, 'review', 'collect', project.batchName], display: `bash ${JSON.stringify(script)} review collect ${project.batchName}` }
   }
   return {
     ...base,
     args: [script, 'batch', 'start', project.batchName, '--prd', project.prdPath],
-    display: `factory batch start ${project.batchName} --prd ${project.prdPath}`,
+    display: `bash ${JSON.stringify(script)} batch start ${project.batchName} --prd ${JSON.stringify(project.prdPath)}`,
   }
 }
 
@@ -75,28 +80,36 @@ export function runCommand(
       cwd: spec.cwd,
       shell: false,
       windowsHide: true,
-      env: { ...process.env, PYTHONUTF8: '1' },
+      env: { ...process.env, PYTHONUTF8: '1', GIT_OPTIONAL_LOCKS: '0', GIT_TERMINAL_PROMPT: '0', GH_PROMPT_DISABLED: '1' },
     })
     let stdout = ''
     let stderr = ''
     let timedOut = false
+    let settled = false
+    const finish = (exitCode: number | null, error = '') => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      const values = secretRefs.map((ref) => secretProvider.resolve(ref)).filter((value): value is string => Boolean(value))
+      resolvePromise({ exitCode, stdout: redactSecrets(stdout, values), stderr: redactSecrets(stderr + error, values), timedOut })
+    }
     const limit = 200_000
     const append = (current: string, chunk: Buffer) => (current + chunk.toString('utf8')).slice(-limit)
     child.stdout.on('data', (chunk: Buffer) => { stdout = append(stdout, chunk) })
     child.stderr.on('data', (chunk: Buffer) => { stderr = append(stderr, chunk) })
     const timer = setTimeout(() => {
       timedOut = true
-      child.kill()
+      if (process.platform === 'win32' && child.pid) {
+        const killer = spawn('taskkill', ['/PID', String(child.pid), '/T', '/F'], { shell: false, windowsHide: true, stdio: 'ignore' })
+        killer.on('error', () => child.kill())
+      } else child.kill('SIGKILL')
+      finish(124, '\ncommand_timed_out')
     }, timeoutMs)
     child.on('error', (error) => {
-      clearTimeout(timer)
-      const values = secretRefs.map((ref) => secretProvider.resolve(ref)).filter((value): value is string => Boolean(value))
-      resolvePromise({ exitCode: null, stdout: redactSecrets(stdout, values), stderr: redactSecrets(`${stderr}${error.message}`, values), timedOut })
+      finish(null, error.message)
     })
     child.on('close', (code) => {
-      clearTimeout(timer)
-      const values = secretRefs.map((ref) => secretProvider.resolve(ref)).filter((value): value is string => Boolean(value))
-      resolvePromise({ exitCode: code, stdout: redactSecrets(stdout, values), stderr: redactSecrets(stderr, values), timedOut })
+      finish(code)
     })
   })
 }

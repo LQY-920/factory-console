@@ -28,6 +28,6 @@ export const api = {
     return request<RunRecord[]>(`/api/runs?${params}`)
   },
   previewReport: (projectId: string, locale: Locale) => request<DailyReportPreview>('/api/reports/daily/preview', { method: 'POST', body: JSON.stringify({ projectId, locale }) }),
+  listReports: (projectId: string) => request<DailyReportPreview[]>(`/api/projects/${projectId}/reports`),
   sendReport: (projectId: string, locale: Locale) => request<DailyReportPreview>('/api/reports/daily/send', { method: 'POST', body: JSON.stringify({ projectId, locale }) }),
 }
-

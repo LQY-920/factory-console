@@ -26,7 +26,7 @@ export function ProjectEditor({ project, onSave, onCancel }: { project?: Project
   const set = <K extends keyof ProjectInput>(key: K, next: ProjectInput[K]) => setValue((current) => ({ ...current, [key]: next }))
   const submit = async (event: FormEvent) => {
     event.preventDefault(); setSaving(true); setError('')
-    try { await onSave(value) } catch (caught) { setError(caught instanceof Error ? caught.message : t('errors.invalidProject')) }
+    try { await onSave(value) } catch (caught) { setError(t(caught && typeof caught === 'object' && 'errorKey' in caught ? String(caught.errorKey) : 'errors.invalidProject')) }
     finally { setSaving(false) }
   }
   return <Panel title={t(project ? 'projects.edit' : 'projects.add')}>
@@ -58,7 +58,7 @@ export function ProjectEditor({ project, onSave, onCancel }: { project?: Project
       </div></fieldset>
       <fieldset><legend>{t('projects.notificationTitle')}</legend><div className="form-grid">
         <Field label={t('projects.notificationType')}><select value={value.notification.type} onChange={(event) => set('notification', { ...value.notification, type: event.target.value as 'none' | 'webhook' })}><option value="none">{t('projects.none')}</option><option value="webhook">{t('projects.webhook')}</option></select></Field>
-        <Field label={t('projects.target')} wide><input type="url" value={value.notification.target} onChange={(event) => set('notification', { ...value.notification, target: event.target.value })} /></Field>
+        <Field label={t('projects.target')} wide><input autoComplete="off" placeholder="MY_PROJECT_WEBHOOK_URL" value={value.notification.target} onChange={(event) => set('notification', { ...value.notification, target: event.target.value })} /></Field>
         <Field label={t('projects.webhookSecretRef')} wide><input value={value.notification.webhookSecretRef} onChange={(event) => set('notification', { ...value.notification, webhookSecretRef: event.target.value })} placeholder="MY_PROJECT_WEBHOOK_SECRET" autoComplete="off" /></Field>
       </div></fieldset>
       <fieldset><legend>{t('projects.dailyTitle')}</legend><div className="form-grid">
@@ -70,4 +70,3 @@ export function ProjectEditor({ project, onSave, onCancel }: { project?: Project
     </form>
   </Panel>
 }
-

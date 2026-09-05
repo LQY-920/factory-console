@@ -5,6 +5,7 @@ import { startDailyReportScheduler } from './scheduler.js'
 
 const port = Number(process.env.FACTORY_CONSOLE_PORT ?? 8787)
 const host = process.env.FACTORY_CONSOLE_HOST ?? '127.0.0.1'
+if (!['127.0.0.1', 'localhost', '::1'].includes(host)) throw new Error('Factory Console must bind to loopback only')
 const store = createStore()
 const secrets = new EnvironmentSecretProvider()
 const { app } = createApp({ store, secrets })

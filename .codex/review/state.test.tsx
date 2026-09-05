@@ -40,3 +40,13 @@ it('R14: saving the selected project must reload its cleared status', async () =
   await act(async () => { await result.current.saveProject(a, a.id) })
   await waitFor(() => expect(result.current.status?.projectId).toBe(a.id))
 })
+
+it('saving configuration does not wait for external GitHub status', async () => {
+  vi.spyOn(api, 'getStatus').mockResolvedValue(status(a.id))
+  vi.spyOn(api, 'updateProject').mockResolvedValue(a)
+  const { result } = renderHook(() => useAppState(), { wrapper: AppStateProvider })
+  await waitFor(() => expect(result.current.status?.projectId).toBe(a.id))
+  vi.mocked(api.getStatus).mockImplementation(() => new Promise(() => undefined))
+  await act(async () => { expect(await result.current.saveProject(a, a.id)).toEqual(a) })
+  expect(result.current.refreshing).toBe(true)
+})

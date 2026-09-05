@@ -14,10 +14,10 @@ Use a single system sans stack for Chinese and English UI text. Use a compact fi
 
 ## Layout
 
-- 216px desktop sidebar, 64px top command bar, and a content grid tuned for 1440px.
+- 216px desktop sidebar, 80px top command bar, and a content grid tuned for 1440px.
 - 8px spacing grid with intentionally varied panel padding.
 - Full-width pipeline stepper, followed by a two-column operational region.
-- Below 960px, the sidebar becomes a horizontal navigation rail and dense two-column areas stack.
+- Below 900px, the sidebar becomes a keyboard-accessible drawer; dense two-column areas stack below 1180px.
 - Below 640px, metric cards become a two-column grid and wide tables use contained horizontal scrolling.
 
 ## Surfaces and Elevation

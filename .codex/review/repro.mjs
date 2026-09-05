@@ -29,7 +29,7 @@ record('R01-empty-secret-form', blankResponse.status, 201)
 const confirmation = await request(app).post(`/api/projects/${p.id}/actions/batchStart`).send({})
 record('CONTROL-confirmation', confirmation.status, 409)
 const unknown = await request(app).post(`/api/projects/${p.id}/actions/constructor`).send({})
-record('R02-prototype-allowlist', { status: unknown.status, executedBatchWithoutConfirmation: unknown.body.output?.includes('FAKE_ONLY_EXECUTED:batch start') }, { status: 400, executedBatchWithoutConfirmation: false })
+record('R02-prototype-allowlist', { status: unknown.status, executedBatchWithoutConfirmation: Boolean(unknown.body.output?.includes('FAKE_ONLY_EXECUTED:batch start')) }, { status: 400, executedBatchWithoutConfirmation: false })
 
 const syntheticWebhook = 'https://example.invalid/hooks/SYNTHETIC-NOT-A-REAL-SECRET'
 const webhookResponse = await request(app).post('/api/projects').send({ ...input, notification: { type: 'webhook', target: syntheticWebhook, webhookSecretRef: 'REVIEW_FAKE_WEBHOOK' } })
@@ -57,4 +57,5 @@ record('R12-status-secret-redaction', leaked.message === process.env.REVIEW_SYNT
 delete process.env.REVIEW_SYNTHETIC_SECRET
 delete process.env.REVIEW_SYNTHETIC_LEAK
 console.log(JSON.stringify(results, null, 2))
+process.exitCode = results.every((row) => JSON.stringify(row.observed) === JSON.stringify(row.expected)) ? 0 : 1
 store.close()

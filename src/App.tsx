@@ -1,7 +1,7 @@
 import { AlertCircle, FolderPlus, LoaderCircle, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { ActionId, ProjectInput } from '../shared/types'
+import type { ActionId, ProjectConfig, ProjectInput } from '../shared/types'
 import { api } from './api'
 import { ConfirmActionDialog } from './components/ConfirmActionDialog'
 import { Layout, type PageId } from './components/Layout'
@@ -19,34 +19,34 @@ export default function App() {
   const { t } = useTranslation()
   const state = useAppState()
   const [page, setPage] = useState<PageId>(() => (localStorage.getItem('factory-console.page') as PageId) || 'overview')
-  const [confirmAction, setConfirmAction] = useState<ActionId>()
+  const [confirmAction, setConfirmAction] = useState<{ action: ActionId; project: ProjectConfig }>()
   const [actionLoading, setActionLoading] = useState(false)
   const [toast, setToast] = useState<{ tone: 'success' | 'danger'; text: string }>()
   const navigate = (next: PageId) => { setPage(next); localStorage.setItem('factory-console.page', next) }
   const showToast = (tone: 'success' | 'danger', text: string) => { setToast({ tone, text }); window.setTimeout(() => setToast(undefined), 3500) }
-  const runAction = async (action: ActionId, confirmed = false) => {
-    if (!state.selectedProject) return
-    if ((action === 'batchStart' || action === 'reviewCollect') && !confirmed) { setConfirmAction(action); return }
+  const runAction = async (action: ActionId, confirmed = false, target = state.selectedProject) => {
+    if (!target) return
+    if ((action === 'batchStart' || action === 'reviewCollect') && !confirmed) { setConfirmAction({ action, project: target }); return }
     setActionLoading(true)
     try {
-      await api.runAction(state.selectedProject.id, action, confirmed)
-      showToast('success', t('command.success'))
+      await api.runAction(target.id, action, confirmed)
+      showToast('success', 'command.success')
       setConfirmAction(undefined)
       await state.refreshStatus()
-    } catch { showToast('danger', t('command.failed')) }
+    } catch { showToast('danger', 'command.failed') }
     finally { setActionLoading(false) }
   }
-  const saveInput = async (input: ProjectInput, id: string) => { await state.saveProject(input, id); await state.refreshStatus() }
+  const saveInput = async (input: ProjectInput, id: string) => { await state.saveProject(input, id) }
   const toggleSchedule = async (enabled: boolean) => {
     const project = state.selectedProject
     if (!project) return
     const { id, createdAt: _created, updatedAt: _updated, ...input } = project
-    await saveInput({ ...input, dailyReport: { ...input.dailyReport, enabled } }, id)
+    try { await saveInput({ ...input, dailyReport: { ...input.dailyReport, enabled } }, id) } catch { showToast('danger', 'workflow.saveFailed') }
   }
 
   let content
   if (page === 'projects') content = <ProjectsPage />
-  else if (page === 'connections') content = <ProjectsPage connectionsOnly />
+  else if (page === 'connections') content = <ProjectsPage key={state.selectedProjectId} connectionsOnly />
   else if (page === 'runs') content = <RunsPage projects={state.projects} />
   else if (page === 'settings') content = <SettingsPage />
   else if (state.loadingProjects) content = <div className="center-state"><LoaderCircle className="spin" size={28} /><span>{t('status.loading')}</span></div>
@@ -61,8 +61,7 @@ export default function App() {
 
   return <>
     <Layout page={page} onNavigate={navigate} onStartBatch={() => void runAction('batchStart')}>{content}</Layout>
-    {confirmAction && state.selectedProject ? <ConfirmActionDialog project={state.selectedProject} action={confirmAction} loading={actionLoading} onClose={() => setConfirmAction(undefined)} onConfirm={() => void runAction(confirmAction, true)} /> : null}
-    {toast ? <div className={`toast toast--${toast.tone}`} role="status">{toast.text}</div> : null}
+    {confirmAction ? <ConfirmActionDialog project={confirmAction.project} action={confirmAction.action} loading={actionLoading} onClose={() => setConfirmAction(undefined)} onConfirm={() => void runAction(confirmAction.action, true, confirmAction.project)} /> : null}
+    {toast ? <div className={`toast toast--${toast.tone}`} role="status">{t(toast.text)}</div> : null}
   </>
 }
-

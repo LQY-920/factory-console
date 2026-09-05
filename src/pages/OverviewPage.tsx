@@ -19,9 +19,8 @@ export function OverviewPage({ project, status, onReports, onToggleSchedule }: {
     <PipelineStepper steps={status.pipeline} batchName={project.batchName} defaultBranch={project.defaultBranch} />
     <div className="operations-grid">
       <ConnectionPanel project={project} status={status} compact />
-      <div className="operations-stack"><HumanActionQueue actions={status.actions} /><DailySchedule project={project} onView={onReports} onToggle={onToggleSchedule} /></div>
+      <div className="operations-stack"><HumanActionQueue actions={status.actions} unavailable={status.github.state !== 'connected'} /><DailySchedule project={project} onView={onReports} onToggle={onToggleSchedule} /></div>
     </div>
     <div className="security-banner"><ShieldCheck size={27} /><span>{t('overview.security')}</span><small>{t('overview.refreshed', { time: new Intl.DateTimeFormat(i18n.language, { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date(status.refreshedAt)) })}</small></div>
   </div>
 }
-

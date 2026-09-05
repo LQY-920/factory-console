@@ -14,4 +14,4 @@ Original requirements: ../Factory-Console-Codex实现提示词.md. Review findin
 
 Never modify salon-wall, factory-skills, or global Skills. No superpowers workflow. Do not run the known mutating Factory next as a read operation. Do not publish credentials, local DBs, or private configuration.
 
-Baseline: 18 tests pass but review confirms multiple P1 defects; not yet ready. Work is in progress, not acceptance-complete.
+Progress: original P1 defects repaired; 53 tests and deterministic Review probes pass. Real isolated GitHub doctor/collect/batch-start and Draft→Ready gate verified. See ACCEPTANCE-2026-09-05.md. Final visual recheck, GitHub push/CI and production-start handoff are being finalized. Baseline REVIEW-2026-09-05.md describes the pre-fix state, not current readiness.

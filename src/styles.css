@@ -14,7 +14,7 @@
   --text: oklch(0.94 0.01 245);
   --muted: oklch(0.69 0.026 245);
   --blue: oklch(0.69 0.17 251);
-  --blue-strong: oklch(0.59 0.205 255);
+  --blue-strong: oklch(0.52 0.205 255);
   --cyan: oklch(0.78 0.145 198);
   --green: oklch(0.72 0.16 154);
   --violet: oklch(0.75 0.15 307);
@@ -62,7 +62,7 @@ code, pre { font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
 .button:active:not(:disabled) { transform: translateY(1px); }
 .button:disabled { opacity: .46; cursor: not-allowed; }
 .button--primary { min-height: 46px; padding-inline: 22px; border-color: oklch(0.65 0.2 253); background: var(--blue-strong); color: oklch(0.97 0.008 245); }
-.button--primary:hover:not(:disabled) { background: oklch(0.64 0.21 253); }
+.button--primary:hover:not(:disabled) { background: oklch(0.55 0.205 255); }
 .button--ghost { background: transparent; border-color: transparent; }
 .button--danger { color: oklch(0.8 0.11 24); border-color: oklch(0.53 0.12 24 / .65); }
 .icon-button { width: 38px; height: 38px; display: inline-grid; place-items: center; border: 0; border-radius: 6px; background: transparent; color: var(--muted); }
@@ -104,6 +104,13 @@ code, pre { font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
 .pipeline-legend { min-height: 39px; display: flex; justify-content: center; gap: 34px; align-items: center; padding: 6px 18px; border-top: 1px solid var(--border-soft); color: var(--muted); font-size: 13px; }
 .pipeline-legend span { display: inline-flex; align-items: center; gap: 7px; }
 .pipeline-legend code { color: var(--text); }
+.action-details { padding: 8px 16px; border-bottom: 1px solid var(--border-soft); }
+.action-details summary, .report-history summary { cursor: pointer; padding: 8px 0; color: var(--muted); }
+.action-details li { padding: 8px 0; overflow-wrap: anywhere; }
+.action-details pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.action-details a { color: var(--blue); }
+.report-history details { border-bottom: 1px solid var(--border-soft); }
+.dialog { max-height: calc(100dvh - 32px); overflow-y: auto; }
 .legend-dot { width: 10px; height: 10px; border-radius: 50%; } .legend-dot--blue { background: var(--blue); } .legend-dot--cyan { background: var(--cyan); } .legend-dot--neutral { background: var(--muted); }
 
 .operations-grid { display: grid; grid-template-columns: minmax(420px, 1fr) minmax(450px, 1.08fr); gap: 16px; }
@@ -227,6 +234,10 @@ code, pre { font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
 }
 
 @media (max-width: 640px) {
+  .pipeline-legend { flex-direction: column; align-items: stretch; gap: 10px; padding: 14px; }
+  .pipeline-legend span { flex-wrap: wrap; min-width: 0; }
+  .pipeline-legend code { overflow-wrap: anywhere; }
+  .schedule-form { flex-wrap: wrap; }
   .brand { font-size: 20px; }
   .topbar { flex-wrap: wrap; height: auto; min-height: 68px; padding-block: 10px; }
   .topbar__spacer { display: none; }
@@ -252,4 +263,19 @@ code, pre { font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+/* Counter foreground must not also determine its background via currentColor. */
+.pipeline-step__icon em { background: var(--violet); color: var(--sidebar); }
+.pipeline-step--id-candidateTest.pipeline-step--human { color: var(--cyan); }
+.pipeline-step--id-candidateTest .pipeline-step__icon em { background: var(--cyan); }
+.pipeline-step--id-candidateTest > .badge--violet { color: var(--cyan); }
+.project-switcher { max-width: 330px; }
+.project-switcher:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; }
+summary:focus-visible, a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+@media (max-width: 640px) {
+  .project-switcher { max-width: none; }
+  .button, .action-row > .button, .icon-button, .language-toggle button, .segmented button { min-height: 44px; }
+  .icon-button, .language-toggle button { min-width: 44px; }
+  .action-details summary, .report-history summary { min-height: 44px; }
 }

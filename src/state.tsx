@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { ProjectConfig, ProjectInput, ProjectStatus } from '../shared/types'
 import { api } from './api'
 
@@ -30,12 +30,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [loadingProjects, setLoadingProjects] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string>()
+  const requestVersion = useRef(0)
   const selectedProject = projects.find((project) => project.id === selectedProjectId)
 
   const setSelectedProjectId = useCallback((id: string) => {
+    requestVersion.current++
     setSelectedProjectIdState(id)
     localStorage.setItem('factory-console.project', id)
     setStatus(undefined)
+    setError(undefined)
   }, [])
 
   const refreshProjects = useCallback(async () => {
@@ -57,15 +60,22 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const refreshStatus = useCallback(async () => {
     if (!selectedProjectId) { setStatus(undefined); return }
     setRefreshing(true)
-    try { setStatus(await api.getStatus(selectedProjectId)); setError(undefined) }
-    catch (caught) { setError(errorKey(caught, 'errors.loadStatus')) }
-    finally { setRefreshing(false) }
+    const version = ++requestVersion.current
+    try { const next = await api.getStatus(selectedProjectId); if (version === requestVersion.current && next.projectId === selectedProjectId) { setStatus(next); setError(undefined) } }
+    catch (caught) { if (version === requestVersion.current) setError(errorKey(caught, 'errors.loadStatus')) }
+    finally { if (version === requestVersion.current) setRefreshing(false) }
   }, [selectedProjectId])
 
   const saveProject = useCallback(async (input: ProjectInput, id?: string) => {
     const saved = id ? await api.updateProject(id, input) : await api.createProject(input)
     await refreshProjects()
     setSelectedProjectId(saved.id)
+    const version = ++requestVersion.current
+    setRefreshing(true)
+    // Saving configuration succeeds independently of slow external status reads.
+    void api.getStatus(saved.id).then((next) => { if (version === requestVersion.current && next.projectId === saved.id) setStatus(next) })
+      .catch((caught) => { if (version === requestVersion.current) setError(errorKey(caught, 'errors.loadStatus')) })
+      .finally(() => { if (version === requestVersion.current) setRefreshing(false) })
     return saved
   }, [refreshProjects, setSelectedProjectId])
 
@@ -86,4 +96,3 @@ export function useAppState(): AppState {
   if (!value) throw new Error('AppStateProvider is missing')
   return value
 }
-

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProjectConfig, ProjectStatus } from '../shared/types'
@@ -51,5 +51,19 @@ describe('Factory Console interactions', () => {
     expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/actions/batchStart'))).toBe(false)
     await user.click(screen.getByRole('button', { name: '确认执行' }))
     await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/actions/batchStart'))).toBe(true))
+  })
+
+  it('traps confirmation focus and restores it on Escape without running a command', async () => {
+    const user = userEvent.setup(); render(<AppStateProvider><App /></AppStateProvider>)
+    const trigger = await screen.findByRole('button', {name:'开始批次'})
+    await screen.findByText('1 个 PR 等待批改')
+    await user.click(trigger)
+    expect(within(screen.getByRole('dialog')).getByRole('button',{name:'关闭'})).toHaveFocus()
+    await user.tab({shift:true})
+    expect(screen.getByRole('button',{name:'确认执行'})).toHaveFocus()
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(trigger).toHaveFocus()
+    expect(vi.mocked(fetch).mock.calls.some(([url])=>String(url).includes('/actions/batchStart'))).toBe(false)
   })
 })

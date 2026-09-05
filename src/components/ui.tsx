@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { LoaderCircle } from 'lucide-react'
 
 export function Button({ children, variant = 'secondary', loading, className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'ghost' | 'danger'; loading?: boolean }) {
-  return <button className={`button button--${variant} ${className}`} disabled={loading || props.disabled} {...props}>
+  return <button className={`button button--${variant} ${className}`} {...props} disabled={loading || props.disabled}>
     {loading ? <LoaderCircle className="spin" size={17} aria-hidden="true" /> : null}
     {children}
   </button>
@@ -26,4 +26,3 @@ export function EmptyState({ icon, title, action }: { icon: ReactNode; title: Re
 export function Field({ label, children, wide = false }: { label: ReactNode; children: ReactNode; wide?: boolean }) {
   return <label className={`field ${wide ? 'field--wide' : ''}`}><span>{label}</span>{children}</label>
 }
-

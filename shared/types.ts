@@ -43,6 +43,7 @@ export interface ProjectConfig {
     enabled: boolean
     time: string
     timezone: string
+    locale?: Locale
   }
   createdAt: string
   updatedAt: string
@@ -69,6 +70,11 @@ export interface GithubIssue {
   title: string
   labels: string[]
   url: string
+  body?: string
+  state?: string
+  closedAt?: string
+  milestone?: string
+  dependencies?: number[]
 }
 
 export interface GithubPullRequest {
@@ -79,13 +85,36 @@ export interface GithubPullRequest {
   isDraft: boolean
   baseRefName: string
   headRefName: string
+  body?: string
+  state?: string
+  mergedAt?: string
+  updatedAt?: string
+  labels?: string[]
+  issueNumber?: number
+  promoted?: boolean
+  feedback?: string
+  decisionSource?: string
+}
+
+export interface GithubRelease { tagName: string; url: string; publishedAt?: string; body?: string; deployed?: boolean }
+export interface CandidateEvidence extends ToolState {
+  total: number
+  pending: number
+  files: Array<{ path: string; url: string; pending: number }>
 }
 
 export interface GithubState extends ToolState {
   repo?: string
   issues: GithubIssue[]
+  issueStates?: Record<number, string>
   pullRequests: GithubPullRequest[]
-  latestRelease?: { tagName: string; url: string; publishedAt?: string }
+  latestRelease?: GithubRelease
+  releases?: GithubRelease[]
+  milestones?: Array<{ title: string; state: string; url: string }>
+  tags?: string[]
+  unpublishedCommits?: number | null
+  candidate?: CandidateEvidence
+  history?: Array<{ kind: 'issue' | 'pr'; number: number; title: string; url: string; completedAt: string }>
 }
 
 export interface FactoryState extends ToolState {
@@ -96,13 +125,13 @@ export interface FactoryState extends ToolState {
 }
 
 export interface MetricCounts {
-  todo: number
-  review: number
-  testing: number
-  rework: number
+  todo: number | null
+  review: number | null
+  testing: number | null
+  rework: number | null
 }
 
-export type HumanActionKind = 'review' | 'testing' | 'rework' | 'merge' | 'release' | 'deploy'
+export type HumanActionKind = 'review' | 'promote' | 'testing' | 'rework' | 'merge' | 'release' | 'deploy'
 
 export interface HumanAction {
   id: string
@@ -111,6 +140,7 @@ export interface HumanAction {
   titleKey: string
   targetUrl?: string
   sourceId?: number
+  items?: Array<{ title: string; url?: string; sourceId?: number; feedback?: string; blockedBy?: number[]; command?: string }>
 }
 
 export interface PipelineStep {
@@ -161,6 +191,9 @@ export interface DailyReportPreview {
   markdown: string
   sent: boolean
   notificationConfigured: boolean
+  id?: string
+  locale?: Locale
+  deliveryError?: string
 }
 
 export interface ApiError {

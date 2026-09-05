@@ -22,14 +22,13 @@ describe('human action calculation', () => {
       { number: 2, title: 'Doing', labels: ['status:doing'], url: 'u2' },
       { number: 3, title: 'Review', labels: ['status:review'], url: 'u3' },
     ], pullRequests: [
-      { number: 3, title: 'Review', url: 'p3', reviewDecision: '', isDraft: false, baseRefName: 'integration/mvp-prd', headRefName: 'feat/3' },
+      { number: 3, issueNumber: 3, title: 'Review', url: 'p3', reviewDecision: '', isDraft: false, baseRefName: 'integration/mvp-prd', headRefName: 'feat/issue-3' },
       { number: 4, title: 'Approved', url: 'p4', reviewDecision: 'APPROVED', isDraft: false, baseRefName: 'integration/mvp-prd', headRefName: 'feat/4' },
       { number: 5, title: 'Changes', url: 'p5', reviewDecision: 'CHANGES_REQUESTED', isDraft: false, baseRefName: 'integration/mvp-prd', headRefName: 'feat/5' },
     ] }
     const factory: FactoryState = { state: 'connected', fields: {}, sections: {} }
     const result = calculateHumanActions(github, factory, project)
-    expect(result.metrics).toEqual({ todo: 1, review: 1, testing: 1, rework: 2 })
-    expect(result.actions.map((action) => action.kind)).toEqual(expect.arrayContaining(['review', 'testing', 'rework']))
+    expect(result.metrics).toEqual({ todo: 1, review: 1, testing: 0, rework: 1 })
+    expect(result.actions.map((action) => action.kind)).toEqual(expect.arrayContaining(['review', 'promote', 'rework']))
   })
 })
-

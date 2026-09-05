@@ -3,6 +3,12 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { EnvironmentSecretProvider, redactSecrets } from './security.js'
 
 describe('credential safety', () => {
+  it('preserves JSON syntax while removing private download tokens', () => {
+    const json = JSON.stringify({ download_url: 'https://example.invalid/file?token=SYNTHETIC_ONLY', content: 'IyBIZWxsbw==', encoding: 'base64', token: 'SYNTHETIC_ONLY' })
+    const redacted = redactSecrets(json)
+    expect(redacted).not.toContain('SYNTHETIC_ONLY')
+    expect(JSON.parse(redacted)).toMatchObject({ content: 'IyBIZWxsbw==', encoding: 'base64', token: '[REDACTED]' })
+  })
   afterEach(() => { delete process.env.FACTORY_TEST_SECRET })
 
   it('redacts resolved values and common credential patterns', () => {
@@ -21,4 +27,3 @@ describe('credential safety', () => {
     expect(provider.resolve('$(danger)')).toBeUndefined()
   })
 })
-
