@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Review fixture only. No Git/GitHub writes or real credentials.
+if [[ "$REVIEW_SYNTHETIC_LEAK" == "1" && "$1" == "status" ]]; then
+  printf '%s\n' "$REVIEW_SYNTHETIC_SECRET" >&2
+  exit 1
+fi
+if [[ "$1" == "status" ]]; then
+  printf '[status:todo]\n  #1 Review fixture\n'
+elif [[ "$1" == "next" ]]; then
+  printf 'NEXT=batch-test\nBATCH=review-fixture\n等待候选测试\n'
+else
+  printf 'FAKE_ONLY_EXECUTED:%s\n' "$*"
+fi
